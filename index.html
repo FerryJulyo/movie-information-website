@@ -40,6 +40,7 @@
       opacity: 0;
       transform: translateY(20px);
       animation: fadeInUp 0.4s forwards;
+      cursor: pointer;
     }
     .movie-item img {
       width: 100%;
@@ -54,11 +55,32 @@
       font-size: 14px;
       color: #ccc;
     }
-
+    #movieDetail {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      display: none;
+      animation: fadeIn 0.5s ease-in;
+    }
+    #movieDetail img {
+      float: right;
+      max-width: 200px;
+      margin-left: 20px;
+      border-radius: 10px;
+    }
     @keyframes fadeInUp {
       to {
         opacity: 1;
         transform: translateY(0);
+      }
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
       }
     }
   </style>
@@ -70,12 +92,16 @@
 
   <div id="movieList" class="movie-list"></div>
 
+  <div id="movieDetail"></div>
+
   <script>
     function searchMovies() {
       const query = document.getElementById("movieInput").value;
       const movieList = document.getElementById("movieList");
+      const movieDetail = document.getElementById("movieDetail");
 
-      movieList.innerHTML = ""; // Kosongkan hasil sebelumnya
+      movieList.innerHTML = "";
+      movieDetail.style.display = "none";
 
       if (query.trim() === "") {
         movieList.innerHTML = "<p>Masukkan judul film terlebih dahulu.</p>";
@@ -90,6 +116,7 @@
               const div = document.createElement("div");
               div.classList.add("movie-item");
               div.style.animationDelay = `${index * 0.1}s`;
+              div.onclick = () => showMovieDetail(movie.imdbID);
 
               div.innerHTML = `
                 <img src="${movie.Poster !== "N/A" ? movie.Poster : 'https://via.placeholder.com/200x300?text=No+Image'}" alt="Poster">
@@ -105,6 +132,37 @@
         .catch(error => {
           movieList.innerHTML = `<p>Terjadi kesalahan saat mengambil data.</p>`;
           console.error("Error:", error);
+        });
+    }
+
+    function showMovieDetail(imdbID) {
+      const movieDetail = document.getElementById("movieDetail");
+
+      fetch(`https://www.omdbapi.com/?i=${imdbID}&apikey=5b6fb743`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.Response === "True") {
+            movieDetail.innerHTML = `
+              <h2>${data.Title} (${data.Year})</h2>
+              <img src="${data.Poster !== "N/A" ? data.Poster : ''}" alt="Poster">
+              <p><strong>Genre:</strong> ${data.Genre}</p>
+              <p><strong>Director:</strong> ${data.Director}</p>
+              <p><strong>Writer:</strong> ${data.Writer}</p>
+              <p><strong>Actors:</strong> ${data.Actors}</p>
+              <p><strong>Plot:</strong> ${data.Plot}</p>
+              <p><strong>Language:</strong> ${data.Language}</p>
+              <p><strong>Awards:</strong> ${data.Awards}</p>
+              <p><strong>IMDB Rating:</strong> ${data.imdbRating}</p>
+            `;
+            movieDetail.style.display = "block";
+            movieDetail.scrollIntoView({ behavior: "smooth" });
+          } else {
+            movieDetail.innerHTML = `<p>Gagal memuat detail film.</p>`;
+          }
+        })
+        .catch(error => {
+          movieDetail.innerHTML = `<p>Terjadi kesalahan saat mengambil data detail.</p>`;
+          console.error("Detail Error:", error);
         });
     }
   </script>
